@@ -1,0 +1,17 @@
+# files without extension
+*/*
+!*/
+!*.*
+
+# didiladda
+!Makefile
+!README*
+
+# seems important enough
+!test/script
+.vscode/
+
+# generated files
+*.o
+*.coff
+swtch.s
