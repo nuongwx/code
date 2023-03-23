@@ -59,11 +59,16 @@ public:
         currentOffset += numWritten;
         return numWritten;
     }
-
     int Length()
     {
         Lseek(file, 0, 2);
         return Tell(file);
+    }
+
+    // shamelessly copied xd
+    int Seek(int position)
+    {
+        return currentOffset = position;
     }
 
 private:
@@ -81,8 +86,9 @@ public:
                           // at "sector" on the disk
     ~OpenFile();          // Close the file
 
-    void Seek(int position); // Set the position from which to
-                             // start reading/writing -- UNIX lseek
+    int Seek(int position); // Set the position from which to
+                            // start reading/writing -- UNIX lseek
+                            // also fuck this, void > int because why fucking not
 
     int Read(char *into, int numBytes); // Read/write bytes from the file,
                                         // starting at the implicit position.

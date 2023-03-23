@@ -52,9 +52,9 @@ OpenFile::~OpenFile()
 //	"position" -- the location within the file for the next Read/Write
 //----------------------------------------------------------------------
 
-void OpenFile::Seek(int position)
+int OpenFile::Seek(int position)
 {
-    seekPosition = position;
+    return seekPosition = position;
 }
 
 //----------------------------------------------------------------------

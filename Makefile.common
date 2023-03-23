@@ -25,8 +25,7 @@
 # All rights reserved.  See copyright.h for copyright notice and limitation 
 # of liability and disclaimer of warranty provisions.
 
-CFLAGS = -g -Wall -Wshadow $(INCPATH) $(DEFINES) $(HOST) -DCHANGED 
-
+CFLAGS = -g -Wall -Wshadow $(INCPATH) $(DEFINES) $(HOST) -DCHANGED
 # These definitions may change as the software is updated.
 # Some of them are also system dependent
 CPP= gcc -E
@@ -99,6 +98,7 @@ FILESYS_H =../filesys/directory.h \
 	../filesys/filehdr.h\
 	../filesys/filesys.h \
 	../filesys/openfile.h\
+    ../filesys/filesys-alt.h\
 	../filesys/synchdisk.h\
 	../machine/disk.h
 FILESYS_C =../filesys/directory.cc\
@@ -106,9 +106,10 @@ FILESYS_C =../filesys/directory.cc\
 	../filesys/filesys.cc\
 	../filesys/fstest.cc\
 	../filesys/openfile.cc\
+    ../filesys/filesys-alt.cc\
 	../filesys/synchdisk.cc\
 	../machine/disk.cc
-FILESYS_O =directory.o filehdr.o filesys.o fstest.o openfile.o synchdisk.o\
+FILESYS_O =directory.o filehdr.o filesys.o fstest.o openfile.o filesys-alt.o synchdisk.o\
 	disk.o
 
 NETWORK_H = ../network/post.h ../machine/network.h

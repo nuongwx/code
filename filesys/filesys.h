@@ -38,13 +38,16 @@
 #include "copyright.h"
 #include "openfile.h"
 
+#include "filesys-alt.h"
+
 #ifdef FILESYS_STUB // Temporarily implement file system calls as
 // calls to UNIX, until the real file system
 // implementation is available
-class FileSystem
+
+class FileSystem : public FileSystemAlt
 {
 public:
-    FileSystem(bool format) {}
+    FileSystem(bool format) {} // no need to format disk but also compatability if FILESYS is defined
 
     bool Create(char *name, int initialSize)
     {
@@ -54,6 +57,13 @@ public:
             return FALSE;
         Close(fileDescriptor);
         return TRUE;
+    }
+
+    int Open(char *name, int type)
+    {
+        // return 69;
+        // being explicit, also i have no recollection of what ive learned in OOP class
+        return FileSystemAlt::Open(name, type);
     }
 
     OpenFile *Open(char *name)
@@ -89,6 +99,9 @@ public:
     void List(); // List all the files in the file system
 
     void Print(); // List all the files and their contents
+
+    // dummy functions for whatever reason idk im literally crying
+    int Open(char *name, int type) { return 1; }
 
 private:
     OpenFile *freeMapFile;   // Bit map of free disk blocks,

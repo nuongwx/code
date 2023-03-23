@@ -48,7 +48,6 @@
 //	are in machine.h.
 //----------------------------------------------------------------------
 
-#define MAX_FILENAME_LENGTH 32
 #define MAX_STRING_SIZE 32
 
 // Input: - User space address (int)
@@ -105,7 +104,7 @@ void Halt()
     interrupt->Halt();
 }
 
-void PCIncrease() // why 4? because the instruction is 4 bytes
+void PCIncrease()
 {
     int pc;
     pc = machine->ReadRegister(PCReg);
@@ -120,15 +119,45 @@ void PCIncrease() // why 4? because the instruction is 4 bytes
     file n stuff
 */
 
+/**
+ * @brief Open a file
+ * @param name: file name
+ * @param mode: 0 for RO, 1 for RW
+ * @return index of file in OpenFileTable
+ */
 void Open()
 {
+    int virtAddr = machine->ReadRegister(4);
+    int mode = machine->ReadRegister(5);
+
+    char *filename = User2System(virtAddr, MAX_STRING_SIZE + 1);
+
+    DEBUG('f', "\n Finish reading filename."); // traceability
+    int ret = fileSystem->Open(filename, mode);
+    printf("hahah %d", ret);
+    // if (filename)   // seems like ASSERT() gets called when filename is NULL, thus not needed for now
+    machine->WriteRegister(2, ret);
+    delete filename;
+
+    return PCIncrease();
 }
 
-//    problem: overwriting existing file, by Create()... somehow
+/**
+ * @brief Close a file
+ * @param id: index of file in OpenFileTable
+ * @return 0 if success, -1 if fail
+ */
+
+/**
+ * @brief Create a file
+ * @param name: file name
+ * @return 0 if success, -1 if fail
+ * @note: file size is 0, overwrite if exist
+ */
 void Create() // Create(char *name)
 {
     int virtAddr = machine->ReadRegister(4);
-    char *filename = User2System(virtAddr, MAX_FILENAME_LENGTH + 1);
+    char *filename = User2System(virtAddr, MAX_STRING_SIZE + 1);
     if (filename == NULL)
     {
         printf("\n Not enough memory in system");
@@ -152,6 +181,7 @@ void Create() // Create(char *name)
 
 void PrintString()
 {
+    ASSERT(false);
     int virtAddr = machine->ReadRegister(4);
     char *buffer = User2System(virtAddr, MAX_STRING_SIZE + 1);
     if (buffer == NULL)
@@ -179,6 +209,8 @@ void Sub() // wee example, just for fun
 /* Footnotes:
     0. "em chỉ xem ý tưởng thôi mà™ 😔"
 
+    0.5. in case you haven't noticed, every joke is a sticky note
+
     1. PCIncrease() must be called after each system call
     2. return PCIncrease() just works.
 
@@ -204,6 +236,8 @@ void ExceptionHandler(ExceptionType which)
             return Halt();
         case SC_Create:
             return Create();
+        case SC_Open:
+            return Open();
         case SC_PrintString:
             return PrintString();
         default:

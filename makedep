@@ -26,6 +26,7 @@
 ../filesys/filesys.cc
 ../filesys/fstest.cc
 ../filesys/openfile.cc
+../filesys/filesys-alt.cc
 ../filesys/synchdisk.cc
 ../machine/disk.cc
 ../network/nettest.cc
