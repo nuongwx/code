@@ -42,23 +42,23 @@ char *argv[];
         for (s = argv[0] + 1; *s != '\0'; ++s)
             switch (*s)
             {
-                case 't':
-                    TRACE = 1;
-                    break;
-                case 'T':
-                    Traptrace = 1;
-                    break;
-                case 'r':
-                    Regtrace = 1;
-                    break;
-                case 'm':
-                    NROWS = atoi(*++argv);
-                    ASSOC = atoi(*++argv);
-                    LINESIZE = atoi(*++argv);
-                    RAND = ((*++argv)[0] == 'r');
-                    LRD = ((*argv)[0] == 'l') && ((*argv)[1] == 'r') && ((*argv)[2] == 'd');
-                    argc -= 4;
-                    break;
+            case 't':
+                TRACE = 1;
+                break;
+            case 'T':
+                Traptrace = 1;
+                break;
+            case 'r':
+                Regtrace = 1;
+                break;
+            case 'm':
+                NROWS = atoi(*++argv);
+                ASSOC = atoi(*++argv);
+                LINESIZE = atoi(*++argv);
+                RAND = ((*++argv)[0] == 'r');
+                LRD = ((*argv)[0] == 'l') && ((*argv)[1] == 'r') && ((*argv)[2] == 'd');
+                argc -= 4;
+                break;
             }
     }
 

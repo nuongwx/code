@@ -34,8 +34,8 @@ public:
     NetworkAddress to;   // Destination machine ID
     NetworkAddress from; // source machine ID
     unsigned length;     // bytes of packet data, excluding the
-                     // packet header (but including the
-                     // MailHeader prepended by the post office)
+                         // packet header (but including the
+                         // MailHeader prepended by the post office)
 };
 
 #define MaxWireSize 64 // largest packet that can go out on the wire
@@ -77,8 +77,8 @@ public:
     // If no packet is waiting, return a header
     // with length 0.
 
-    void SendDone(); // Interrupt handler, called when message is
-                     // sent
+    void SendDone();      // Interrupt handler, called when message is
+                          // sent
     void CheckPktAvail(); // Check if there is an incoming packet
 
 private:
@@ -88,15 +88,15 @@ private:
     char sockName[32];            // File name corresponding to UNIX socket
     VoidFunctionPtr writeHandler; // Interrupt handler, signalling next packet
                                   //      can be sent.
-    VoidFunctionPtr readHandler; // Interrupt handler, signalling packet has
-                                 // 	arrived.
-    int handlerArg; // Argument to be passed to interrupt handler
-                    //   (pointer to post office)
-    bool sendBusy;    // Packet is being sent.
-    bool packetAvail; // Packet has arrived, can be pulled off of
-                      //   network
-    PacketHeader inHdr;        // Information about arrived packet
-    char inbox[MaxPacketSize]; // Data for arrived packet
+    VoidFunctionPtr readHandler;  // Interrupt handler, signalling packet has
+                                  // 	arrived.
+    int handlerArg;               // Argument to be passed to interrupt handler
+                                  //   (pointer to post office)
+    bool sendBusy;                // Packet is being sent.
+    bool packetAvail;             // Packet has arrived, can be pulled off of
+                                  //   network
+    PacketHeader inHdr;           // Information about arrived packet
+    char inbox[MaxPacketSize];    // Data for arrived packet
 };
 
 #endif // NETWORK_H

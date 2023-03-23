@@ -52,67 +52,67 @@ system_trap()
 
     switch (syscallno)
     {
-        case SYS_exit: /*1*/
-            printstatistics();
-            fflush(stdout);
-            exit(0);
-            break;
-        case SYS_read: /*3*/
-            Reg[1] =
-                read(u_to_int_fd(o0), u_to_int_addr(o1), o2);
-            break;
-        case SYS_write: /*4*/
-            Reg[1] =
-                write(u_to_int_fd(o0), u_to_int_addr(o1), o2);
-            break;
+    case SYS_exit: /*1*/
+        printstatistics();
+        fflush(stdout);
+        exit(0);
+        break;
+    case SYS_read: /*3*/
+        Reg[1] =
+            read(u_to_int_fd(o0), u_to_int_addr(o1), o2);
+        break;
+    case SYS_write: /*4*/
+        Reg[1] =
+            write(u_to_int_fd(o0), u_to_int_addr(o1), o2);
+        break;
 
-        case SYS_open:                                /*5*/
-            Reg[1] = open(u_to_int_addr(o0), o1, o2); /* */
-            break;
+    case SYS_open:                                /*5*/
+        Reg[1] = open(u_to_int_addr(o0), o1, o2); /* */
+        break;
 
-        case SYS_close: /*6*/
-            Reg[1] = 0; /* hack */
-            break;
+    case SYS_close: /*6*/
+        Reg[1] = 0; /* hack */
+        break;
 
-        case 17: /* 17 */
-            /* old sbreak. where did it go? */
-            Reg[1] = ((o0 / 8192) + 1) * 8192;
-            break;
+    case 17: /* 17 */
+        /* old sbreak. where did it go? */
+        Reg[1] = ((o0 / 8192) + 1) * 8192;
+        break;
 
-        case SYS_lseek: /*19*/
-            Reg[1] = (int)lseek(u_to_int_fd(o0), (long)o1, o2);
-            break;
+    case SYS_lseek: /*19*/
+        Reg[1] = (int)lseek(u_to_int_fd(o0), (long)o1, o2);
+        break;
 
-        case SYS_ioctl: /* 54 */
-        {               /* copied from sas -- I don't understand yet. */
-            /* see dave weaver */
+    case SYS_ioctl:       /* 54 */
+    {                     /* copied from sas -- I don't understand yet. */
+                          /* see dave weaver */
 #define IOCPARM_MASK 0x7f /* parameters must be < 128 bytes */
-            int size = (o1 >> 16) & IOCPARM_MASK;
-            char ioctl_group = (o1 >> 8) & 0x00ff;
-            if ((ioctl_group == 't') && (size == 8))
-            {
-                size = 6;
-                o1 = (o1 & ~((IOCPARM_MASK << 16))) | (size << 16);
-            }
+        int size = (o1 >> 16) & IOCPARM_MASK;
+        char ioctl_group = (o1 >> 8) & 0x00ff;
+        if ((ioctl_group == 't') && (size == 8))
+        {
+            size = 6;
+            o1 = (o1 & ~((IOCPARM_MASK << 16))) | (size << 16);
         }
-            Reg[1] = ioctl(u_to_int_fd(o0), o1, u_to_int_addr(o2));
-            Reg[1] = 0; /* hack */
-            break;
+    }
+        Reg[1] = ioctl(u_to_int_fd(o0), o1, u_to_int_addr(o2));
+        Reg[1] = 0; /* hack */
+        break;
 
-        case SYS_fstat: /* 62 */
-            Reg[1] = fstat(o1, o2);
-            break;
+    case SYS_fstat: /* 62 */
+        Reg[1] = fstat(o1, o2);
+        break;
 
-        case SYS_getpagesize: /* 64 */
-            Reg[1] = getpagesize();
-            break;
+    case SYS_getpagesize: /* 64 */
+        Reg[1] = getpagesize();
+        break;
 
-        default:
-            printf("Unknown System call %d\n", syscallno);
-            if (!Traptrace)
-                dump_reg();
-            exit(2);
-            break;
+    default:
+        printf("Unknown System call %d\n", syscallno);
+        if (!Traptrace)
+            dump_reg();
+        exit(2);
+        break;
     }
     if (Traptrace)
     {
@@ -123,7 +123,7 @@ system_trap()
 
 char *u_to_int_addr(ptr)
 int ptr;
-{   /* convert a user pointer to the real address   */
+{ /* convert a user pointer to the real address   */
     /* used in the interpreter			*/
 
     return ((char *)((int)mem - memoffset + ptr));

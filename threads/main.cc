@@ -92,13 +92,13 @@ int main(int argc, char **argv)
         argCount = 1;
         switch (argv[0][1])
         {
-            case 'q':
-                testnum = atoi(argv[1]);
-                argCount++;
-                break;
-            default:
-                testnum = 1;
-                break;
+        case 'q':
+            testnum = atoi(argv[1]);
+            argCount++;
+            break;
+        default:
+            testnum = 1;
+            break;
         }
     }
 
@@ -185,5 +185,5 @@ int main(int argc, char **argv)
                              // to those threads by saying that the
                              // "main" thread is finished, preventing
                              // it from returning.
-    return (0); // Not reached...
+    return (0);              // Not reached...
 }

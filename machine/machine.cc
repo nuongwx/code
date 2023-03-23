@@ -136,20 +136,20 @@ void Machine::Debugger()
         runUntilTime = 0;
         switch (*buf)
         {
-            case '\n':
-                break;
+        case '\n':
+            break;
 
-            case 'c':
-                singleStep = FALSE;
-                break;
+        case 'c':
+            singleStep = FALSE;
+            break;
 
-            case '?':
-                printf("Machine commands:\n");
-                printf("    <return>  execute one instruction\n");
-                printf("    <number>  run until the given timer tick\n");
-                printf("    c         run until completion\n");
-                printf("    ?         print help message\n");
-                break;
+        case '?':
+            printf("Machine commands:\n");
+            printf("    <return>  execute one instruction\n");
+            printf("    <number>  run until the given timer tick\n");
+            printf("    c         run until completion\n");
+            printf("    ?         print help message\n");
+            break;
         }
     }
     delete[] buf;
@@ -169,20 +169,20 @@ void Machine::DumpState()
     for (i = 0; i < NumGPRegs; i++)
         switch (i)
         {
-            case StackReg:
-                printf("\tSP(%d):\t0x%x%s", i, registers[i],
-                       ((i % 4) == 3) ? "\n" : "");
-                break;
+        case StackReg:
+            printf("\tSP(%d):\t0x%x%s", i, registers[i],
+                   ((i % 4) == 3) ? "\n" : "");
+            break;
 
-            case RetAddrReg:
-                printf("\tRA(%d):\t0x%x%s", i, registers[i],
-                       ((i % 4) == 3) ? "\n" : "");
-                break;
+        case RetAddrReg:
+            printf("\tRA(%d):\t0x%x%s", i, registers[i],
+                   ((i % 4) == 3) ? "\n" : "");
+            break;
 
-            default:
-                printf("\t%d:\t0x%x%s", i, registers[i],
-                       ((i % 4) == 3) ? "\n" : "");
-                break;
+        default:
+            printf("\t%d:\t0x%x%s", i, registers[i],
+                   ((i % 4) == 3) ? "\n" : "");
+            break;
         }
 
     printf("\tHi:\t0x%x", registers[HiReg]);

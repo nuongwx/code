@@ -112,7 +112,7 @@ class Machine
 public:
     Machine(bool debug); // Initialize the simulation of the hardware
                          // for running user programs
-    ~Machine(); // De-allocate the data structures
+    ~Machine();          // De-allocate the data structures
 
     // Routines callable by the Nachos kernel
     void Run(); // Run a user program
@@ -155,8 +155,8 @@ public:
     // Note that *all* communication between the user program and the kernel
     // are in terms of these data structures.
 
-    char *mainMemory; // physical memory to store user program,
-                      // code and data, while executing
+    char *mainMemory;            // physical memory to store user program,
+                                 // code and data, while executing
     int registers[NumTotalRegs]; // CPU registers, for executing user programs
 
     // NOTE: the hardware translation of virtual addresses in the user program
@@ -184,8 +184,8 @@ public:
     unsigned int pageTableSize;
 
 private:
-    bool singleStep; // drop back into the debugger after each
-                     // simulated instruction
+    bool singleStep;  // drop back into the debugger after each
+                      // simulated instruction
     int runUntilTime; // drop back into the debugger when simulated
                       // time reaches this value
 };

@@ -4,7 +4,7 @@ AccessModifierOffset: '-4'
 BreakBeforeBraces: Allman
 ColumnLimit: '0'
 Cpp11BracedListStyle: 'true'
-IndentCaseLabels: 'true'
+IndentCaseLabels: 'false'
 IndentWidth: '4'
 NamespaceIndentation: All
 SortIncludes: 'false'

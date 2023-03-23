@@ -45,7 +45,7 @@ public:
     MailBoxAddress to;   // Destination mail box
     MailBoxAddress from; // Mail box to reply to
     unsigned length;     // Bytes of message data (excluding the
-                     // mail header)
+                         // mail header)
 };
 
 // Maximum "payload" -- real data -- that can included in a single message
@@ -123,9 +123,9 @@ public:
     void PostalDelivery(); // Wait for incoming messages,
                            // and then put them in the correct mailbox
 
-    void PacketSent(); // Interrupt handler, called when outgoing
-                       // packet has been put on network; next
-                       // packet can now be sent
+    void PacketSent();     // Interrupt handler, called when outgoing
+                           // packet has been put on network; next
+                           // packet can now be sent
     void IncomingPacket(); // Interrupt handler, called when incoming
                            // packet has arrived and can be pulled
                            // off of network (i.e., time to call

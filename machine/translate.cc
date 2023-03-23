@@ -101,23 +101,23 @@ bool Machine::ReadMem(int addr, int size, int *value)
     }
     switch (size)
     {
-        case 1:
-            data = machine->mainMemory[physicalAddress];
-            *value = data;
-            break;
+    case 1:
+        data = machine->mainMemory[physicalAddress];
+        *value = data;
+        break;
 
-        case 2:
-            data = *(unsigned short *)&machine->mainMemory[physicalAddress];
-            *value = ShortToHost(data);
-            break;
+    case 2:
+        data = *(unsigned short *)&machine->mainMemory[physicalAddress];
+        *value = ShortToHost(data);
+        break;
 
-        case 4:
-            data = *(unsigned int *)&machine->mainMemory[physicalAddress];
-            *value = WordToHost(data);
-            break;
+    case 4:
+        data = *(unsigned int *)&machine->mainMemory[physicalAddress];
+        *value = WordToHost(data);
+        break;
 
-        default:
-            ASSERT(FALSE);
+    default:
+        ASSERT(FALSE);
     }
 
     DEBUG('a', "\tvalue read = %8.8x\n", *value);
@@ -152,20 +152,20 @@ bool Machine::WriteMem(int addr, int size, int value)
     }
     switch (size)
     {
-        case 1:
-            machine->mainMemory[physicalAddress] = (unsigned char)(value & 0xff);
-            break;
+    case 1:
+        machine->mainMemory[physicalAddress] = (unsigned char)(value & 0xff);
+        break;
 
-        case 2:
-            *(unsigned short *)&machine->mainMemory[physicalAddress] = ShortToMachine((unsigned short)(value & 0xffff));
-            break;
+    case 2:
+        *(unsigned short *)&machine->mainMemory[physicalAddress] = ShortToMachine((unsigned short)(value & 0xffff));
+        break;
 
-        case 4:
-            *(unsigned int *)&machine->mainMemory[physicalAddress] = WordToMachine((unsigned int)value);
-            break;
+    case 4:
+        *(unsigned int *)&machine->mainMemory[physicalAddress] = WordToMachine((unsigned int)value);
+        break;
 
-        default:
-            ASSERT(FALSE);
+    default:
+        ASSERT(FALSE);
     }
 
     return TRUE;

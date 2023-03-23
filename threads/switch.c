@@ -122,8 +122,8 @@
 nop /* These 2 nops are skipped because we are called
      * with a jmp+8 instruction. */
         clr %
-    fp  /* Clearing the frame pointer makes gdb backtraces
-         * of thread stacks end here. */
+    fp /* Clearing the frame pointer makes gdb backtraces
+        * of thread stacks end here. */
         /* Currently the arguments are in out registers we
          * save them into local registers so they won't be
          * trashed during the calls we make. */
