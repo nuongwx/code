@@ -155,7 +155,7 @@ void Initialize(int argc, char **argv)
 
 #ifdef USER_PROGRAM
     machine = new Machine(debugUserProg); // this must come first
-    gSynchConsole = new SynchConsole(NULL, NULL);
+    gSynchConsole = new SynchConsole();
 #endif
 
 #ifdef FILESYS
@@ -184,6 +184,7 @@ void Cleanup()
 
 #ifdef USER_PROGRAM
     delete machine;
+    delete gSynchConsole;
 #endif
 
 #ifdef FILESYS_NEEDED

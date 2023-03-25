@@ -1,5 +1,8 @@
 // CAE - MULTI - SYNCHCONSOLE DEFINITION
 
+#ifndef SYNCHCONSOLE_H
+#define SYNCHCONSOLE_H
+
 #include "console.h"
 
 class SynchConsole
@@ -15,5 +18,7 @@ public:
 private:
     Console *cons; // Pointer to an async console
 };
+
+#endif // SYNCHCONSOLE_H
 
 // CAE - MULTI - END SECTION

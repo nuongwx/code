@@ -6,33 +6,38 @@ MAKE = make
 LPR = lpr
 
 all:
+	find . -regex '.*\.\(cc\|c\|h\)' -not -iname stdarg.h -not -iname start.c | xargs clang-format -i
 	cp test/start.s test/start.c
-	find . -regex '.*\.\(cc\|c\|h\)' -not -iname stdarg.h -not -iname start.c -exec clang-format -style=file -i {} \;
-# sussy								 ^^^^^^^^^^^^^^^^^^^^
+#
 	cd threads; $(MAKE) depend
 	cd threads; $(MAKE) nachos
-	cd userprog; $(MAKE) depend 
-	cd userprog; $(MAKE) nachos 
+	cd userprog; $(MAKE) depend
+	cd userprog; $(MAKE) nachos
 	cd vm; $(MAKE) depend
-	cd vm; $(MAKE) nachos 
+	cd vm; $(MAKE) nachos
 	cd filesys; $(MAKE) depend
-	cd filesys; $(MAKE) nachos 
+	cd filesys; $(MAKE) nachos
 	cd network; $(MAKE) depend
-	cd network; $(MAKE) nachos 
+	cd network; $(MAKE) nachos
 	cd bin; make all
 	cd test; make all
 
 # don't delete executables in "test" in case there is no cross-compiler
 clean:
-	/bin/csh -c "rm -f *~ */{core,nachos,DISK,*.o,swtch.s,*~} test/{*.coff} bin/{coff2flat,coff2noff,disassemble,out}"
+	find . \
+	-not -path '*/\.*' \
+	-regex ".*\(core\|nachos\|DISK\|.o\|swtch.s\)" \
+	-or -regex ".*test\/.*\.coff" \
+	-or -regex ".*bin\/.*\(coff2flat\|coff2noff\|disassemble\|out\)" \
+	| xargs rm -v
 
 print:
-	/bin/csh -c "$(LPR) Makefile* */Makefile"
-	/bin/csh -c "$(LPR) threads/*.h threads/*.cc threads/*.s"
-	/bin/csh -c "$(LPR) userprog/*.h userprog/*.cc" 
-	/bin/csh -c "$(LPR) filesys/*.h filesys/*.cc
-	/bin/csh -c "$(LPR) network/*.h network/*.cc 
-	/bin/csh -c "$(LPR) machine/*.h machine/*.cc
-	/bin/csh -c "$(LPR) bin/noff.h bin/coff.h bin/coff2noff.c"
-	/bin/csh -c "$(LPR) test/*.h test/*.c test/*.s"
+#	/bin/csh -c "$(LPR) Makefile* */Makefile"
+#	/bin/csh -c "$(LPR) threads/*.h threads/*.cc threads/*.s"
+#	/bin/csh -c "$(LPR) userprog/*.h userprog/*.cc"
+#	/bin/csh -c "$(LPR) filesys/*.h filesys/*.cc
+#	/bin/csh -c "$(LPR) network/*.h network/*.cc
+#	/bin/csh -c "$(LPR) machine/*.h machine/*.cc
+#	/bin/csh -c "$(LPR) bin/noff.h bin/coff.h bin/coff2noff.c"
+#	/bin/csh -c "$(LPR) test/*.h test/*.c test/*.s"
 # DO NOT DELETE

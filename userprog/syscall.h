@@ -30,7 +30,9 @@
 #define SC_Fork 9
 #define SC_Yield 10
 
-#define SC_PrintString 40
+#define SC_PrintString 42
+#define SC_Seek 43
+#define SC_Delete 44
 
 #ifndef IN_ASM
 
@@ -111,6 +113,12 @@ int Read(char *buffer, int size, OpenFileId id);
 
 /* Close the file, we're done reading and writing to it. */
 void Close(OpenFileId id);
+
+/* Move the file pointer to the specified position */
+int Seek(int pos, OpenFileId id);
+
+/* Delete the file */
+int Delete(char *name);
 
 /* User-level thread operations: Fork and Yield.  To allow multiple
  * threads to run within a user program.

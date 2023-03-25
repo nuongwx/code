@@ -48,7 +48,7 @@
 //	are in machine.h.
 //----------------------------------------------------------------------
 
-#define MAX_STRING_SIZE 32
+#define MAX_STRING_SIZE 1024
 
 // Input: - User space address (int)
 // - Limit of buffer (int)
@@ -99,7 +99,7 @@ int System2User(int virtAddr, int len, char *buffer)
 
 void Halt()
 {
-    DEBUG('a', "\n Shutdown, initiated by user program.");
+    DEBUG('z', "\n Shutdown, initiated by user program.");
     printf("\n\n Shutdown, initiated by user program.");
     interrupt->Halt();
 }
@@ -122,7 +122,7 @@ void PCIncrease()
 /**
  * @brief Open a file
  * @param name: file name
- * @param mode: 0 for RO, 1 for RW
+ * @param mode: 0 for O_RDONLY, 1 for O_RDWR
  * @return index of file in OpenFileTable
  */
 void Open()
@@ -132,14 +132,19 @@ void Open()
 
     char *filename = User2System(virtAddr, MAX_STRING_SIZE + 1);
 
-    DEBUG('f', "\n Finish reading filename."); // traceability
+    if (filename == NULL)
+    {
+        printf("\n Not enough memory in system");
+        machine->WriteRegister(2, -1);
+        delete filename;
+        return;
+    }
+
+    DEBUG('f', "\n Finish reading filename.\n"); // traceability
     int ret = fileSystem->Open(filename, mode);
-    printf("hahah %d", ret);
     // if (filename)   // seems like ASSERT() gets called when filename is NULL, thus not needed for now
     machine->WriteRegister(2, ret);
     delete filename;
-
-    return PCIncrease();
 }
 
 /**
@@ -147,6 +152,96 @@ void Open()
  * @param id: index of file in OpenFileTable
  * @return 0 if success, -1 if fail
  */
+void Close()
+{
+    int id = machine->ReadRegister(4);
+    machine->WriteRegister(2, fileSystem->Close(id));
+}
+
+/**
+ * @brief Read fd
+ * @param buffer: pointer to buffer
+ * @param size: number of bytes to read
+ * @param id: index of file in OpenFileTable
+ * @return number of bytes read, -1 if fail, -2 if EOF reached
+ */
+void Read()
+{
+    int virtAddr = machine->ReadRegister(4);
+    int size = machine->ReadRegister(5);
+    int id = machine->ReadRegister(6);
+    // fprintf(stderr, "\nREAD id: %d, size: %d\n", id, size);
+    char *buffer = new char[size + 1];
+    int ret = fileSystem->Read(buffer, size, id);
+    if (ret != -1) // writes anyway
+    {
+        System2User(virtAddr, size, buffer);
+    }
+    machine->WriteRegister(2, ret);
+    delete buffer;
+}
+
+/**
+ * @brief Write fd
+ * @param buffer: pointer to buffer
+ * @param size: number of bytes to write
+ * @param id: index of file in OpenFileTable
+ * @return number of bytes written, -1 if fail
+ */
+void Write()
+{
+    int virtAddr = machine->ReadRegister(4);
+    int size = machine->ReadRegister(5);
+    int id = machine->ReadRegister(6);
+    // fprintf(stderr, "\nWRITE id: %d, size: %d\n", id, size);
+    char *buffer = User2System(virtAddr, size);
+    int ret = fileSystem->Write(buffer, size, id);
+    machine->WriteRegister(2, ret);
+    delete buffer;
+    // return PCIncrease();
+}
+
+/**
+ * @brief Seek to position in file
+ * @param pos: position to seek to
+ * @param id: index of file in OpenFileTable
+ * @return 0 if success, -1 if fail
+ */
+void Seek()
+{
+    int pos = machine->ReadRegister(4);
+    int id = machine->ReadRegister(5);
+    machine->WriteRegister(2, fileSystem->Seek(pos, id));
+}
+
+/**
+ * @brief Delete a file
+ * @param name: file name
+ * @return 0 if success, -1 if file's not exist, 1 if UNIX unlink() fails and file is not removed
+ */
+void Delete()
+{
+    int virtAddr = machine->ReadRegister(4);
+    char *filename = User2System(virtAddr, MAX_STRING_SIZE + 1);
+    if (filename == NULL)
+    {
+        printf("\n Not enough memory in system");
+        DEBUG('z', "\n Not enough memory in system");
+        machine->WriteRegister(2, -1);
+        delete filename;
+        return;
+    }
+    DEBUG('z', "\n Finish reading filename.");
+    if (!fileSystem->Remove(filename))
+    {
+        printf("\n Error delete file '%s'", filename);
+        machine->WriteRegister(2, -1);
+        delete filename;
+        return;
+    }
+    machine->WriteRegister(2, 0);
+    delete filename;
+}
 
 /**
  * @brief Create a file
@@ -161,13 +256,13 @@ void Create() // Create(char *name)
     if (filename == NULL)
     {
         printf("\n Not enough memory in system");
-        DEBUG('a', "\n Not enough memory in system");
+        DEBUG('z', "\n Not enough memory in system");
         machine->WriteRegister(2, -1);
         delete filename;
         return;
     }
-    DEBUG('a', "\n Finish reading filename.");
-    if (!fileSystem->Create(filename, 0))
+    DEBUG('z', "\n Finish reading filename.");
+    if (fileSystem->Create(filename, 0))
     {
         printf("\n Error create file '%s'", filename);
         machine->WriteRegister(2, -1);
@@ -176,25 +271,23 @@ void Create() // Create(char *name)
     }
     machine->WriteRegister(2, 0);
     delete filename;
-    return PCIncrease();
 }
 
 void PrintString()
 {
-    ASSERT(false);
     int virtAddr = machine->ReadRegister(4);
     char *buffer = User2System(virtAddr, MAX_STRING_SIZE + 1);
     if (buffer == NULL)
     {
         printf("\n Not enough memory in system");
-        DEBUG('a', "\n Not enough memory in system");
+        DEBUG('z', "\n Not enough memory in system");
         machine->WriteRegister(2, -1);
         delete buffer;
         return;
     }
     // printf("%s", buffer);
     gSynchConsole->Write(buffer, strlen(buffer) + 1);
-    return PCIncrease();
+    // return PCIncrease();
 }
 
 void Sub() // wee example, just for fun
@@ -203,7 +296,6 @@ void Sub() // wee example, just for fun
     int op2 = machine->ReadRegister(5);
     int result = op1 - op2;
     machine->WriteRegister(2, result);
-    return PCIncrease();
 }
 
 /* Footnotes:
@@ -211,14 +303,16 @@ void Sub() // wee example, just for fun
 
     0.5. in case you haven't noticed, every joke is a sticky note
 
-    1. PCIncrease() must be called after each system call
-    2. return PCIncrease() just works.
+    1. There's no 2
 
     3. The system call number is passed in the r2 register
     4. The system call arguments are passed in the r4, r5, r6, r7 registers
 
     5. The return value of the system call is passed in the r2 register
     6. The return address of the system call is passed in the r4 register
+
+
+    tao file co nd echo createfile copy
 WIP
 */
 
@@ -233,18 +327,39 @@ void ExceptionHandler(ExceptionType which)
         switch (type)
         {
         case SC_Halt:
-            return Halt();
+            Halt();
+            break;
         case SC_Create:
-            return Create();
+            Create();
+            break;
         case SC_Open:
-            return Open();
+            Open();
+            break;
+        case SC_Close:
+            Close();
+            break;
+        case SC_Read:
+            Read();
+            break;
+        case SC_Write:
+            Write();
+            break;
+        case SC_Seek:
+            Seek();
+            break;
+        case SC_Delete:
+            Delete();
+            break;
         case SC_PrintString:
-            return PrintString();
+            PrintString();
+            break;
         default:
             printf("\nUnexpected syscall (%d %d)\n", which, type);
             interrupt->Halt();
             break;
         }
+        return PCIncrease();
+
         break;
     default:
         printf("\nUnexpected user mode exception (%d %d)\n", which, type);

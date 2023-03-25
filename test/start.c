@@ -9,8 +9,8 @@
 #define IN_ASM
 #include "syscall.h"
 
-        .text   
-        .align  2
+		.text   
+		.align  2
 
 /* -------------------------------------------------------------
  * __start
@@ -130,18 +130,34 @@ Yield:
 	j	$31
 	.end Yield
 
-    .globl  PrintString
-    .ent    PrintString
+	.globl PrintString
+	.ent	PrintString
 PrintString:
-    addiu   $2,$0,SC_PrintString
-    syscall
-    j       $31
-    .end    PrintString
+	addiu $2,$0,SC_PrintString
+	syscall
+	j	$31
+	.end PrintString
+
+	.globl Delete
+	.ent	Delete
+Delete:
+	addiu $2,$0,SC_Delete
+	syscall
+	j	$31
+	.end Delete
+
+	.globl Seek
+	.ent	Seek
+Seek:
+	addiu $2,$0,SC_Seek
+	syscall
+	j	$31
+	.end Seek
 
 /* dummy function to keep gcc happy */
-        .globl  __main
-        .ent    __main
+		.globl  __main
+		.ent	__main
 __main:
-        j       $31
-        .end    __main
+		j	   $31
+		.end	__main
 

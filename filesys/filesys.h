@@ -51,12 +51,12 @@ public:
 
     bool Create(char *name, int initialSize)
     {
-        int fileDescriptor = OpenForWrite(name);
+        // int fileDescriptor = OpenForWrite(name);
 
-        if (fileDescriptor == -1)
-            return FALSE;
-        Close(fileDescriptor);
-        return TRUE;
+        // if (fileDescriptor == -1)
+        //     return FALSE;
+        // Close(fileDescriptor);
+        return Close(Open(name, 2));
     }
 
     int Open(char *name, int type)
@@ -79,7 +79,7 @@ public:
 };
 
 #else // FILESYS
-class FileSystem
+class FileSystem : public FileSystemAlt
 {
 public:
     FileSystem(bool format); // Initialize the file system.

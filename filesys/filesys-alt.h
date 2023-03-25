@@ -3,6 +3,9 @@
 
 #include "openfile.h"
 #include "utility.h"
+#include "synchcons.h"
+
+extern SynchConsole *gSynchConsole;
 
 #define GLOBAL_FILE_TABLE_SIZE 10
 
@@ -11,10 +14,10 @@
 
 #define RO 0
 #define RW 1
+#define WO 2 // Create() fix
 
 /*
     sysdep.h : OpenForRead()
-    openfile.something : Seek()
 */
 
 typedef int OpenFileId;
@@ -24,9 +27,18 @@ class Node
 public:
     OpenFile *file;
     int mode;
+    char *name;
 
     Node() : file(NULL), mode(0) {}
-    Node(OpenFile *f, int m) : file(f), mode(m) {}
+    Node(OpenFile *f, const char *c, int m) : file(f), mode(m)
+    {
+        name = new char[strlen(c) + 1];
+        strcpy(name, c);
+    }
+    ~Node()
+    {
+        delete[] name;
+    }
 };
 
 // additional features for FileSystem, powered by [REDACTED]
@@ -37,20 +49,20 @@ private:
     int count;
 
 public:
-    FileSystemAlt() : globalFileTable(new Node *[GLOBAL_FILE_TABLE_SIZE]), count(0)
+    FileSystemAlt() : globalFileTable(new Node *[GLOBAL_FILE_TABLE_SIZE]), count(2)
     {
-        for (int i = 0; i < GLOBAL_FILE_TABLE_SIZE; i++)
+        for (int i = 2; i < GLOBAL_FILE_TABLE_SIZE; i++)
         {
             globalFileTable[i] = NULL;
         }
 
         // preserves something something
-        globalFileTable[CONSOLE_INPUT] = new Node();
-        globalFileTable[CONSOLE_OUTPUT] = new Node();
+        globalFileTable[CONSOLE_INPUT] = new Node(0, "stdin", RO);
+        globalFileTable[CONSOLE_OUTPUT] = new Node(0, "stdout", RW);
     }
     ~FileSystemAlt()
     {
-        for (int i = 0; i < GLOBAL_FILE_TABLE_SIZE; i++)
+        for (int i = 2; i < GLOBAL_FILE_TABLE_SIZE; i++)
         {
             if (globalFileTable[i] != NULL)
             {
@@ -72,14 +84,17 @@ public:
         case RW:
             fileDescriptor = OpenForReadWrite(name, FALSE);
             break;
+        case WO:
+            fileDescriptor = OpenForWrite(name);
+            break;
         default:
             break;
         }
         if (fileDescriptor != -1)
         {
             OpenFile *file = new OpenFile(fileDescriptor);
-            Node *node = new Node(file, mode);
-            for (int i = 0; i < GLOBAL_FILE_TABLE_SIZE; i++)
+            Node *node = new Node(file, name, mode);
+            for (int i = 2; i < GLOBAL_FILE_TABLE_SIZE; i++)
             {
                 if (globalFileTable[i] == NULL)
                 {
@@ -108,9 +123,13 @@ public:
 
     int Read(char *buffer, int size, OpenFileId id)
     {
-        if (id < 2 || id >= GLOBAL_FILE_TABLE_SIZE || globalFileTable[id] == NULL)
+        if (id < 0 || id >= GLOBAL_FILE_TABLE_SIZE || globalFileTable[id] == NULL || id == CONSOLE_OUTPUT)
         {
             return -1;
+        }
+        if (id == CONSOLE_INPUT)
+        {
+            return gSynchConsole->Read(buffer, size);
         }
         // readsize > size eq EOF reached as per OpenFile::Read()
         return (globalFileTable[id]->file->Read(buffer, size) == size) ? size : -2;
@@ -118,19 +137,25 @@ public:
 
     int Write(char *buffer, int size, OpenFileId id)
     {
-        if (id < 2 ||
+        if (id < 0 ||
             id >= GLOBAL_FILE_TABLE_SIZE ||
             globalFileTable[id] == NULL ||
             globalFileTable[id]->mode == RO)
         {
             return -1;
         }
+        size = strnlen(buffer, size);
+        if (id == CONSOLE_OUTPUT)
+        {
+            return gSynchConsole->Write(buffer, size);
+        }
+        fprintf(stderr, "Write: %s", buffer);
         return globalFileTable[id]->file->Write(buffer, size); // checks probably not needed
     }
 
     int Seek(int pos, OpenFileId id)
     {
-        if (id < 2 ||
+        if (id < 2 || // error if fd is console
             id >= GLOBAL_FILE_TABLE_SIZE ||
             globalFileTable[id] == NULL ||
             pos < -1 ||
@@ -138,7 +163,30 @@ public:
         {
             return -1;
         }
-        return (pos == -1) ? globalFileTable[id]->file->Seek(globalFileTable[id]->file->Length()) : globalFileTable[id]->file->Seek(pos);
+        if (pos == -1)
+        {
+            pos = globalFileTable[id]->file->Length();
+        }
+        globalFileTable[id]->file->Seek(pos);
+        return Tell(id) == pos ? pos : -1;
+    }
+
+    int Find(char *name)
+    {
+        printf("Find: %s", name);
+        for (int i = 2; i < GLOBAL_FILE_TABLE_SIZE; i++)
+        {
+            if (globalFileTable[i] != NULL && strcmp(globalFileTable[i]->name, name) == 0)
+            {
+                return i;
+            }
+        }
+        return -1; // not open
+    }
+
+    int Delete(char *name)
+    {
+        return Find(name) == -1 ? Unlink(name) : -1;
     }
 };
 
