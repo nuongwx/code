@@ -48,7 +48,7 @@
 //	are in machine.h.
 //----------------------------------------------------------------------
 
-#define MAX_STRING_SIZE 1024
+#define MAX_STRING_SIZE 1023
 
 // Input: - User space address (int)
 // - Limit of buffer (int)
@@ -68,10 +68,11 @@ char *User2System(int virtAddr, int limit)
     {
         machine->ReadMem(virtAddr + i, 1, &oneChar);
         kernelBuf[i] = (char)oneChar;
-        // printf("%c",kernelBuf[i]);
+        // DEBUG('k', "%c", kernelBuf[i]);
         if (oneChar == 0)
             break;
     }
+    DEBUG('k', "\nkernelBuf: %s\n", kernelBuf);
     return kernelBuf;
 }
 
@@ -94,13 +95,14 @@ int System2User(int virtAddr, int len, char *buffer)
         machine->WriteMem(virtAddr + i, 1, oneChar);
         i++;
     } while (i < len && oneChar != 0);
+    DEBUG('k', "\nSystem2User: %s", buffer);
     return i;
 }
 
 void Halt()
 {
     DEBUG('z', "\n Shutdown, initiated by user program.");
-    printf("\n\n Shutdown, initiated by user program.");
+    DEBUG('z', "\n\n Shutdown, initiated by user program.");
     interrupt->Halt();
 }
 
@@ -115,6 +117,14 @@ void PCIncrease()
     machine->WriteRegister(NextPCReg, pc); // NextPC <- NextPC + 4
 }
 
+void printMem(char *c)
+{
+    DEBUG('z', "\n MEM DUMP: ");
+
+    for (int i = 0; i < 50; i++)
+        DEBUG('z', "%d ", c[i]);
+}
+
 /*
     file n stuff
 */
@@ -123,7 +133,7 @@ void PCIncrease()
  * @brief Open a file
  * @param name: file name
  * @param mode: 0 for O_RDONLY, 1 for O_RDWR
- * @return index of file in OpenFileTable
+ * @return index of file in OpenFileTable, -1 if fail
  */
 void Open()
 {
@@ -131,17 +141,16 @@ void Open()
     int mode = machine->ReadRegister(5);
 
     char *filename = User2System(virtAddr, MAX_STRING_SIZE + 1);
-
+    DEBUG('z', "\nDUMP: %s", filename);
     if (filename == NULL)
     {
-        printf("\n Not enough memory in system");
+        DEBUG('z', "\n Not enough memory in system");
         machine->WriteRegister(2, -1);
         delete filename;
         return;
     }
-
-    DEBUG('f', "\n Finish reading filename.\n"); // traceability
     int ret = fileSystem->Open(filename, mode);
+    DEBUG('z', "\n Open file %s, mode %d, return id %d", filename, mode, ret);
     // if (filename)   // seems like ASSERT() gets called when filename is NULL, thus not needed for now
     machine->WriteRegister(2, ret);
     delete filename;
@@ -170,6 +179,9 @@ void Read()
     int virtAddr = machine->ReadRegister(4);
     int size = machine->ReadRegister(5);
     int id = machine->ReadRegister(6);
+
+    // memset(machine->mainMemory + virtAddr, 0, size);
+    DEBUG('z', "\n Read: %d bytes from file %d\n", size, id);
     // fprintf(stderr, "\nREAD id: %d, size: %d\n", id, size);
     char *buffer = new char[size + 1];
     int ret = fileSystem->Read(buffer, size, id);
@@ -177,6 +189,8 @@ void Read()
     {
         System2User(virtAddr, size, buffer);
     }
+    DEBUG('z', "\n CONTINUE %d", ret);
+    printMem(buffer);
     machine->WriteRegister(2, ret);
     delete buffer;
 }
@@ -193,9 +207,16 @@ void Write()
     int virtAddr = machine->ReadRegister(4);
     int size = machine->ReadRegister(5);
     int id = machine->ReadRegister(6);
-    // fprintf(stderr, "\nWRITE id: %d, size: %d\n", id, size);
+    DEBUG('z', "\n Write: %d bytes to file %d\n", size, id);
     char *buffer = User2System(virtAddr, size);
-    int ret = fileSystem->Write(buffer, size, id);
+    if (buffer == NULL)
+    {
+        DEBUG('z', "\n Not enough memory in system");
+        machine->WriteRegister(2, -1);
+        delete buffer;
+        return;
+    }
+    int ret = fileSystem->Write(buffer, strlen(buffer), id);
     machine->WriteRegister(2, ret);
     delete buffer;
     // return PCIncrease();
@@ -225,16 +246,15 @@ void Delete()
     char *filename = User2System(virtAddr, MAX_STRING_SIZE + 1);
     if (filename == NULL)
     {
-        printf("\n Not enough memory in system");
         DEBUG('z', "\n Not enough memory in system");
         machine->WriteRegister(2, -1);
         delete filename;
         return;
     }
-    DEBUG('z', "\n Finish reading filename.");
+    DEBUG('z', "\n filename: %s", filename);
     if (!fileSystem->Remove(filename))
     {
-        printf("\n Error delete file '%s'", filename);
+        DEBUG('z', "\n Error delete file '%s'", filename);
         machine->WriteRegister(2, -1);
         delete filename;
         return;
@@ -253,18 +273,20 @@ void Create() // Create(char *name)
 {
     int virtAddr = machine->ReadRegister(4);
     char *filename = User2System(virtAddr, MAX_STRING_SIZE + 1);
+    DEBUG('z', "\nENTRY: ");
+    printMem(filename);
+
     if (filename == NULL)
     {
-        printf("\n Not enough memory in system");
         DEBUG('z', "\n Not enough memory in system");
         machine->WriteRegister(2, -1);
         delete filename;
         return;
     }
-    DEBUG('z', "\n Finish reading filename.");
+    DEBUG('z', "\n\nCREAT filename: %s\n", filename);
     if (fileSystem->Create(filename, 0))
     {
-        printf("\n Error create file '%s'", filename);
+        DEBUG('z', "\n Error create file '%s'", filename);
         machine->WriteRegister(2, -1);
         delete filename;
         return;
@@ -279,7 +301,6 @@ void PrintString()
     char *buffer = User2System(virtAddr, MAX_STRING_SIZE + 1);
     if (buffer == NULL)
     {
-        printf("\n Not enough memory in system");
         DEBUG('z', "\n Not enough memory in system");
         machine->WriteRegister(2, -1);
         delete buffer;
@@ -354,7 +375,7 @@ void ExceptionHandler(ExceptionType which)
             PrintString();
             break;
         default:
-            printf("\nUnexpected syscall (%d %d)\n", which, type);
+            DEBUG('z', "\nUnexpected syscall (%d %d)\n", which, type);
             interrupt->Halt();
             break;
         }
@@ -362,7 +383,7 @@ void ExceptionHandler(ExceptionType which)
 
         break;
     default:
-        printf("\nUnexpected user mode exception (%d %d)\n", which, type);
+        DEBUG('z', "\nUnexpected user mode exception (%d %d)\n", which, type);
         interrupt->Halt();
         break;
     }

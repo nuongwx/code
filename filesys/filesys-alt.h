@@ -49,6 +49,13 @@ private:
     int count;
 
 public:
+    void printMem(char *c)
+    {
+        DEBUG('z', "\n MEM DUMP: ");
+
+        for (int i = 0; i < 50; i++)
+            DEBUG('z', "%d ", c[i]);
+    }
     FileSystemAlt() : globalFileTable(new Node *[GLOBAL_FILE_TABLE_SIZE]), count(2)
     {
         for (int i = 2; i < GLOBAL_FILE_TABLE_SIZE; i++)
@@ -58,7 +65,7 @@ public:
 
         // preserves something something
         globalFileTable[CONSOLE_INPUT] = new Node(0, "stdin", RO);
-        globalFileTable[CONSOLE_OUTPUT] = new Node(0, "stdout", RW);
+        globalFileTable[CONSOLE_OUTPUT] = new Node(0, "stdout", WO);
     }
     ~FileSystemAlt()
     {
@@ -127,12 +134,24 @@ public:
         {
             return -1;
         }
+        memset(buffer, 0, size);
+        printMem(buffer);
+        int read = 0;
+        DEBUG('z', "\n\nREAD BEGIN: %s", buffer);
+
         if (id == CONSOLE_INPUT)
         {
-            return gSynchConsole->Read(buffer, size);
+            read = gSynchConsole->Read(buffer, size);
         }
+        else
+        {
+            read = globalFileTable[id]->file->Read(buffer, size);
+        }
+        buffer[read] = '\0';
+        DEBUG('z', "\nDUMP READ: ");
+        printMem(buffer);
         // readsize > size eq EOF reached as per OpenFile::Read()
-        return (globalFileTable[id]->file->Read(buffer, size) == size) ? size : -2;
+        return (read == size) ? size : -2;
     }
 
     int Write(char *buffer, int size, OpenFileId id)
@@ -144,13 +163,20 @@ public:
         {
             return -1;
         }
-        size = strnlen(buffer, size);
+        DEBUG('z', "\n\nWRITE BEGIN: %s", buffer);
+        // size = strnlen(buffer, size);
+        int read = 0;
         if (id == CONSOLE_OUTPUT)
         {
-            return gSynchConsole->Write(buffer, size);
+            read = gSynchConsole->Write(buffer, size);
         }
-        fprintf(stderr, "Write: %s", buffer);
-        return globalFileTable[id]->file->Write(buffer, size); // checks probably not needed
+        else
+        {
+            read = globalFileTable[id]->file->Write(buffer, size);
+        } // checks probably not needed
+        DEBUG('z', "\nDUMP WRITE: ");
+        printMem(buffer);
+        return read;
     }
 
     int Seek(int pos, OpenFileId id)

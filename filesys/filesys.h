@@ -56,7 +56,7 @@ public:
         // if (fileDescriptor == -1)
         //     return FALSE;
         // Close(fileDescriptor);
-        return Close(Open(name, 2));
+        return !Close(Open(name, 2));
     }
 
     int Open(char *name, int type)
