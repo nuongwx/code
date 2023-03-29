@@ -51,19 +51,12 @@ public:
 
     bool Create(char *name, int initialSize)
     {
-        // int fileDescriptor = OpenForWrite(name);
+        int fileDescriptor = OpenForWrite(name);
 
-        // if (fileDescriptor == -1)
-        //     return FALSE;
-        // Close(fileDescriptor);
-        return !Close(Open(name, 2));
-    }
-
-    int Open(char *name, int type)
-    {
-        // return 69;
-        // being explicit, also i have no recollection of what ive learned in OOP class
-        return FileSystemAlt::Open(name, type);
+        if (fileDescriptor == -1)
+            return FALSE;
+        Close(fileDescriptor);
+        return TRUE;
     }
 
     OpenFile *Open(char *name)
@@ -99,9 +92,6 @@ public:
     void List(); // List all the files in the file system
 
     void Print(); // List all the files and their contents
-
-    // dummy functions for whatever reason idk im literally crying
-    int Open(char *name, int type) { return 1; }
 
 private:
     OpenFile *freeMapFile;   // Bit map of free disk blocks,

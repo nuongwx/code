@@ -69,8 +69,8 @@ char *User2System(int virtAddr, int limit)
         machine->ReadMem(virtAddr + i, 1, &oneChar);
         kernelBuf[i] = (char)oneChar;
         // DEBUG('k', "%c", kernelBuf[i]);
-        if (oneChar == 0)
-            break;
+        // if (oneChar == 0)
+        //     break;
     }
     DEBUG('k', "\nkernelBuf: %s\n", kernelBuf);
     return kernelBuf;
@@ -94,7 +94,7 @@ int System2User(int virtAddr, int len, char *buffer)
         oneChar = (int)buffer[i];
         machine->WriteMem(virtAddr + i, 1, oneChar);
         i++;
-    } while (i < len && oneChar != 0);
+    } while (i < len); // && oneChar != 0);
     DEBUG('k', "\nSystem2User: %s", buffer);
     return i;
 }
@@ -149,7 +149,7 @@ void Open()
         delete filename;
         return;
     }
-    int ret = fileSystem->Open(filename, mode);
+    int ret = fileSystem->fOpen(filename, mode);
     DEBUG('z', "\n Open file %s, mode %d, return id %d", filename, mode, ret);
     // if (filename)   // seems like ASSERT() gets called when filename is NULL, thus not needed for now
     machine->WriteRegister(2, ret);
@@ -164,7 +164,7 @@ void Open()
 void Close()
 {
     int id = machine->ReadRegister(4);
-    machine->WriteRegister(2, fileSystem->Close(id));
+    machine->WriteRegister(2, fileSystem->fClose(id));
 }
 
 /**
@@ -180,15 +180,14 @@ void Read()
     int size = machine->ReadRegister(5);
     int id = machine->ReadRegister(6);
 
-    // memset(machine->mainMemory + virtAddr, 0, size);
-    DEBUG('z', "\n Read: %d bytes from file %d\n", size, id);
-    // fprintf(stderr, "\nREAD id: %d, size: %d\n", id, size);
     char *buffer = new char[size + 1];
-    int ret = fileSystem->Read(buffer, size, id);
-    if (ret != -1) // writes anyway
+    DEBUG('z', "\n TO READ: %d bytes from file %d\n", size, id);
+    int ret = fileSystem->fRead(buffer, size, id);
+    if (ret < size)
     {
-        System2User(virtAddr, size, buffer);
+        ret = -2;
     }
+    System2User(virtAddr, size, buffer);
     DEBUG('z', "\n CONTINUE %d", ret);
     printMem(buffer);
     machine->WriteRegister(2, ret);
@@ -209,6 +208,8 @@ void Write()
     int id = machine->ReadRegister(6);
     DEBUG('z', "\n Write: %d bytes to file %d\n", size, id);
     char *buffer = User2System(virtAddr, size);
+    DEBUG('z', "\nBUFF DUMP: ");
+    printMem(buffer);
     if (buffer == NULL)
     {
         DEBUG('z', "\n Not enough memory in system");
@@ -216,7 +217,11 @@ void Write()
         delete buffer;
         return;
     }
-    int ret = fileSystem->Write(buffer, strlen(buffer), id);
+    int ret = fileSystem->fWrite(buffer, size, id);
+    if (ret < size)
+    {
+        ret = -2;
+    }
     machine->WriteRegister(2, ret);
     delete buffer;
     // return PCIncrease();
@@ -232,7 +237,7 @@ void Seek()
 {
     int pos = machine->ReadRegister(4);
     int id = machine->ReadRegister(5);
-    machine->WriteRegister(2, fileSystem->Seek(pos, id));
+    machine->WriteRegister(2, fileSystem->fSeek(pos, id));
 }
 
 /**
@@ -252,7 +257,7 @@ void Delete()
         return;
     }
     DEBUG('z', "\n filename: %s", filename);
-    if (!fileSystem->Remove(filename))
+    if (fileSystem->fDelete(filename))
     {
         DEBUG('z', "\n Error delete file '%s'", filename);
         machine->WriteRegister(2, -1);
@@ -284,7 +289,7 @@ void Create() // Create(char *name)
         return;
     }
     DEBUG('z', "\n\nCREAT filename: %s\n", filename);
-    if (fileSystem->Create(filename, 0))
+    if (!fileSystem->Create(filename, 0))
     {
         DEBUG('z', "\n Error create file '%s'", filename);
         machine->WriteRegister(2, -1);

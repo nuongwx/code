@@ -14,7 +14,7 @@ extern SynchConsole *gSynchConsole;
 
 #define RO 0
 #define RW 1
-#define WO 2 // Create() fix
+#define WO 2 // Create() fix, used to
 
 /*
     sysdep.h : OpenForRead()
@@ -37,6 +37,10 @@ public:
     }
     ~Node()
     {
+        if (file)
+        {
+            file->~OpenFile();
+        }
         delete[] name;
     }
 };
@@ -69,7 +73,7 @@ public:
     }
     ~FileSystemAlt()
     {
-        for (int i = 2; i < GLOBAL_FILE_TABLE_SIZE; i++)
+        for (int i = 0; i < GLOBAL_FILE_TABLE_SIZE; i++)
         {
             if (globalFileTable[i] != NULL)
             {
@@ -79,8 +83,7 @@ public:
         delete[] globalFileTable;
     }
 
-    // TODO: implement syscalls
-    int Open(char *name, int mode)
+    int fOpen(char *name, int mode)
     {
         int fileDescriptor = -1;
         switch (mode)
@@ -91,9 +94,9 @@ public:
         case RW:
             fileDescriptor = OpenForReadWrite(name, FALSE);
             break;
-        case WO:
-            fileDescriptor = OpenForWrite(name);
-            break;
+        // case WO: // explicitly used to nuke file, handles by Create() instead now
+        //     fileDescriptor = OpenForWrite(name);
+        //     break;
         default:
             break;
         }
@@ -116,7 +119,7 @@ public:
         return -1;
     }
 
-    int Close(OpenFileId id)
+    int fClose(OpenFileId id)
     {
         if (id < 2 || id >= GLOBAL_FILE_TABLE_SIZE || globalFileTable[id] == NULL)
         {
@@ -128,7 +131,7 @@ public:
         return 0;
     }
 
-    int Read(char *buffer, int size, OpenFileId id)
+    int fRead(char *buffer, int size, OpenFileId id)
     {
         if (id < 0 || id >= GLOBAL_FILE_TABLE_SIZE || globalFileTable[id] == NULL || id == CONSOLE_OUTPUT)
         {
@@ -151,10 +154,11 @@ public:
         DEBUG('z', "\nDUMP READ: ");
         printMem(buffer);
         // readsize > size eq EOF reached as per OpenFile::Read()
-        return (read == size) ? size : -2;
+        // return (read == size) ? size : -2;   // let the caller handle EOF instead
+        return read;
     }
 
-    int Write(char *buffer, int size, OpenFileId id)
+    int fWrite(char *buffer, int size, OpenFileId id)
     {
         if (id < 0 ||
             id >= GLOBAL_FILE_TABLE_SIZE ||
@@ -179,7 +183,7 @@ public:
         return read;
     }
 
-    int Seek(int pos, OpenFileId id)
+    int fSeek(int pos, OpenFileId id)
     {
         if (id < 2 || // error if fd is console
             id >= GLOBAL_FILE_TABLE_SIZE ||
@@ -194,12 +198,11 @@ public:
             pos = globalFileTable[id]->file->Length();
         }
         globalFileTable[id]->file->Seek(pos);
-        return Tell(id) == pos ? pos : -1;
+        return pos; // we're using OpenFile handle(anw), not sys fd (epic crash)
     }
 
     int Find(char *name)
     {
-        printf("Find: %s", name);
         for (int i = 2; i < GLOBAL_FILE_TABLE_SIZE; i++)
         {
             if (globalFileTable[i] != NULL && strcmp(globalFileTable[i]->name, name) == 0)
@@ -210,7 +213,7 @@ public:
         return -1; // not open
     }
 
-    int Delete(char *name)
+    int fDelete(char *name)
     {
         return Find(name) == -1 ? Unlink(name) : -1;
     }
