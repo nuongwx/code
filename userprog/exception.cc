@@ -300,6 +300,72 @@ void Create() // Create(char *name)
     delete filename;
 }
 
+void StartProcess(int virtAddr)
+{
+    char *filename = User2System(virtAddr, MAX_STRING_SIZE + 1);
+    if (filename == NULL)
+    {
+        DEBUG('z', "\n Not enough memory in system");
+        machine->WriteRegister(2, -1);
+        delete filename;
+        return;
+    }
+    DEBUG('z', "\n Exec filename: %s", filename);
+    OpenFile *executable = fileSystem->Open(filename);
+    if (executable == NULL)
+    {
+        DEBUG('z', "\n Unable to open file %s", filename);
+        machine->WriteRegister(2, -1);
+        delete filename;
+        return;
+    }
+    // AddrSpace *space = new AddrSpace(executable);
+    delete executable; // close file
+    // currentThread->space = space;
+    currentThread->space->InitRegisters(); // set the initial register values
+    currentThread->space->RestoreState();  // load page table register
+    machine->Run();                        // jump to the user progam
+    ASSERT(FALSE);                         // machine->Run never returns;
+                                           // the address space exits
+                                           // by doing the syscall "exit"
+}
+
+/**
+ * @brief Execute a program in a new thread
+ * @param name: file name
+ * @return SpaceId if success, -1 if fail
+ */
+
+void Exec()
+{
+    int virtAddr = machine->ReadRegister(4);
+    char *filename = User2System(virtAddr, MAX_STRING_SIZE + 1);
+    if (filename == NULL)
+    {
+        DEBUG('z', "\n Not enough memory in system");
+        machine->WriteRegister(2, -1);
+        delete filename;
+        return;
+    }
+    DEBUG('r', "\n Exec filename: %s", filename);
+    OpenFile *executable = fileSystem->Open(filename);
+    if (executable == NULL)
+    {
+        DEBUG('z', "\n Unable to open file %s", filename);
+        machine->WriteRegister(2, -1);
+        delete filename;
+        return;
+    }
+    AddrSpace *space = new AddrSpace(executable);
+    delete executable; // close file
+    Thread *newThread = new Thread(filename);
+    newThread->space = space;
+    newThread->Fork(StartProcess, virtAddr);
+    machine->WriteRegister(2, newThread->space->spaceId);
+    DEBUG('r', "\n Exec filename: %s, spaceId: %d", filename, newThread->space->spaceId);
+    // delete filename;
+}
+
 void PrintString()
 {
     int virtAddr = machine->ReadRegister(4);
@@ -375,6 +441,9 @@ void ExceptionHandler(ExceptionType which)
             break;
         case SC_Delete:
             Delete();
+            break;
+        case SC_Exec:
+            Exec();
             break;
         case SC_PrintString:
             PrintString();
