@@ -360,6 +360,7 @@ void Exec()
     delete executable; // close file
     Thread *newThread = new Thread(filename);
     newThread->space = space;
+    newThread->priority = machine->ReadRegister(5);
     newThread->Fork(StartProcess, virtAddr);
     machine->WriteRegister(2, newThread->space->spaceId);
     DEBUG('r', "\n Exec filename: %s, spaceId: %d", filename, newThread->space->spaceId);
