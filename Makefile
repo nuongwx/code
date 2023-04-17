@@ -25,7 +25,7 @@ all:
 # don't delete executables in "test" in case there is no cross-compiler
 clean:
 	find . \
-	-not -path '*/\.*' \
+	-not -path '*/\.*' -and -not -path './nachos' \
 	-regex ".*\(core\|nachos\|DISK\|.o\|swtch.s\)" \
 	-or -regex ".*test\/.*\.coff" \
 	-or -regex ".*bin\/.*\(coff2flat\|coff2noff\|disassemble\|out\)" \

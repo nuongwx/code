@@ -86,11 +86,11 @@ private:
     int machineState[MachineStateSize]; // all registers except for stackTop
 
 public:
-    Thread(char *debugName); // initialize a Thread
-    ~Thread();               // deallocate a Thread
-                             // NOTE -- thread being deleted
-                             // must not be running when delete
-                             // is called
+    Thread(char *debugName, int p = 0); // initialize a Thread
+    ~Thread();                          // deallocate a Thread
+                                        // NOTE -- thread being deleted
+                                        // must not be running when delete
+                                        // is called
 
     // basic thread operations
 
@@ -105,6 +105,7 @@ public:
                           // overflowed its stack
     void setStatus(ThreadStatus st) { status = st; }
     char *getName() { return (name); }
+    int getPriority() { return (priority); }
     void Print() { printf("%s, ", name); }
 
 private:
@@ -132,6 +133,7 @@ public:
     void RestoreUserState(); // restore user-level register state
 
     AddrSpace *space; // User code this thread is running.
+    int priority;     // Priority of the thread
 #endif
 };
 
