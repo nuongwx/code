@@ -355,7 +355,7 @@ void Exec()
     Thread *newThread = new Thread(filename);
     newThread->space = space;
     newThread->priority = machine->ReadRegister(5);
-    newThread->Fork(StartProcess, virtAddr);
+    newThread->Fork(StartProcess, int(strdup(filename)));
     machine->WriteRegister(2, newThread->space->spaceId);
     DEBUG('r', "\n Exec filename: %s, spaceId: %d", filename, newThread->space->spaceId);
     // delete filename;

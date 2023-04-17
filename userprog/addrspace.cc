@@ -110,7 +110,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
         //       noffH.code.virtualAddr, noffH.code.size);
         // executable->ReadAt(&(machine->mainMemory[noffH.code.virtualAddr]),
         //                    noffH.code.size, noffH.code.inFileAddr);
-        for (int i = 0; i < numPages; i++)
+        for (int i = 0; i < (noffH.code.size + (PageSize - 1)) / PageSize; i++) // ceil() equivalent
         {
             executable->ReadAt(&(machine->mainMemory[noffH.code.virtualAddr + pageTable[i].physicalPage * PageSize]),
                                PageSize, noffH.code.inFileAddr + i * PageSize);
@@ -122,7 +122,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
         //       noffH.initData.virtualAddr, noffH.initData.size);
         // executable->ReadAt(&(machine->mainMemory[noffH.initData.virtualAddr]),
         //                    noffH.initData.size, noffH.initData.inFileAddr);
-        for (int i = 0; i < numPages; i++)
+        for (int i = 0; i < (noffH.initData.size + (PageSize - 1)) / PageSize; i++) // just small non-negative integers
         {
             executable->ReadAt(&(machine->mainMemory[noffH.initData.virtualAddr + pageTable[i].physicalPage * PageSize]),
                                PageSize, noffH.initData.inFileAddr + i * PageSize);
